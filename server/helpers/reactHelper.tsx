@@ -8,9 +8,7 @@ import HTTPError from "./HTTPError";
 
 const removeTags = /[&<>]/g;
 const tagsToReplace: Record<string, string> = {
-  '&': "&amp;",
-  '<': "&lt;",
-  '>': "&gt;",
+  '<': `\u003C`,
 };
 
 declare global {
