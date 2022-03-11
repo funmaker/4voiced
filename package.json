@@ -17,7 +17,7 @@
 		"lint-fix": "eslint --ext .js --ext .jsx --ext .ts --ext .tsx --ignore-path .gitignore . --fix"
 	},
 	"dependencies": {
-		"axios": "^0.21.1",
+		"axios": "^0.21.2",
 		"body-parser": "^1.19.0",
 		"chalk": "^4.1.1",
 		"compression": "^1.7.4",
@@ -79,7 +79,7 @@
 		"less": "^3.13.1",
 		"less-loader": "^9.0.0",
 		"mini-css-extract-plugin": "^2.1.0",
-		"node-sass": "^6.0.1",
+		"node-sass": "^7.0.0",
 		"npm-run-all": "^4.1.5",
 		"sass-loader": "^12.1.0",
 		"start-server-nestjs-webpack-plugin": "^2.2.5",
