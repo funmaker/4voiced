@@ -6,9 +6,10 @@ import index from '../views/index.handlebars';
 import App from "../../client/App";
 import HTTPError from "./HTTPError";
 
-const removeTags = /[&<>]/g;
+const removeTags = /[<>]/g;
 const tagsToReplace: Record<string, string> = {
-  '<': `\u003C`,
+  '<': `\\u003C`, // eslint-disable-line @typescript-eslint/naming-convention
+  '>': `\\u003E`, // eslint-disable-line @typescript-eslint/naming-convention
 };
 
 declare global {
