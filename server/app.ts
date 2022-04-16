@@ -1,12 +1,20 @@
-import * as http from 'http';
-import express from 'express';
-import bodyParser from 'body-parser';
-import cookieParser from 'cookie-parser';
-import compression from 'compression';
-import morgan from 'morgan';
-import { router } from "./routes";
+import * as http from "http";
+import express from "express";
+import expressCore from "express-serve-static-core";
+import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
+import compression from "compression";
+import morgan from "morgan";
+import csrf from "csurf";
+import session from "express-session";
+import pgConnect from "connect-pg-simple";
+import { ErrorResponse } from "../types/api";
 import { reactMiddleware } from "./helpers/reactHelper";
 import HTTPError from "./helpers/HTTPError";
+import configs from "./helpers/configs";
+import { pool } from "./helpers/db";
+import { router as apiRouter } from "./api";
+import { router as pagesRouter } from "./pages";
 
 const app = express();
 
@@ -23,24 +31,39 @@ if(process.env.NODE_ENV === 'development') {
   app.use('/style.css', express.static('style.css'));
 }
 
+const pgSession = pgConnect(session);
+app.use(session({
+  store: new pgSession({ pool }),
+  secret: configs.session.secret,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
+}));
+
+app.use(csrf());
 app.use(reactMiddleware);
 
-app.use('/', router);
+app.use('/api', apiRouter);
+app.use('/', pagesRouter);
 
 app.use((req, res, next) => {
   next(new HTTPError(404));
 });
 
-app.use((err: Partial<HTTPError>, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err);
+app.use((err: Partial<HTTPError>, req: expressCore.Request, ogRes: expressCore.Response, _next: expressCore.NextFunction) => {
+  const res = ogRes as expressCore.ResponseEx<ErrorResponse>;
+  if(err.HTTPcode !== 404) console.error(err);
   
   const code = err.HTTPcode || 500;
   const result = {
-    code,
-    message: err.publicMessage || http.STATUS_CODES[code],
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    _error: {
+      code,
+      message: err.publicMessage || http.STATUS_CODES[code] || "Something Happened",
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    },
   };
-  res.status(code).react(result);
+  if("react" in res) res.status(code).react(result);
+  else res.status(code).json(result);
 });
 
 export default app;

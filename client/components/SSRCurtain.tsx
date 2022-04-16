@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import useRSS from "../hooks/useRSS";
 
 interface Props {
   children?: any;
 }
 
 export default function SSRCurtain({ children }: Props) {
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => setLoaded(true), []);
+  const rss = useRSS();
   
-  if(loaded) return children || null;
-  else return null;
+  if(rss) return null;
+  else return children || null;
 }

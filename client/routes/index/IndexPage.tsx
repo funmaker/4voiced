@@ -1,13 +1,13 @@
 import React, { useEffect, useReducer } from 'react';
 import { Segment } from "semantic-ui-react";
-import { IndexResponse } from "../../../server/routes/apiTypes";
-import usePageData from "../../helpers/usePageData";
+import { IndexPageResponse } from "../../../types/api";
+import usePageData from "../../hooks/usePageData";
 import "./IndexPage.scss";
 
 const busyBraile = ['⠙', '⠸', '⢰', '⣠', '⣄', '⡆', '⠇', '⠋'];
 
 export default function IndexPage() {
-  const [pageData] = usePageData<IndexResponse>();
+  const [pageData] = usePageData<IndexPageResponse>();
   const [counter, incCounter] = useReducer(acc => acc + 1, 0);
   
   useEffect(() => {

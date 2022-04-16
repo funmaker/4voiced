@@ -1,9 +1,10 @@
 import React from "react";
 import ReactDOMServer from 'react-dom/server';
 import { StaticRouter } from "react-router";
-import express from "express";
-import index from '../views/index.handlebars';
+import expressCore from "express-serve-static-core";
 import App from "../../client/App";
+import { InitialData } from "../../types/api";
+import index from '../views/index.handlebars';
 import HTTPError from "./HTTPError";
 
 const removeTags = /[<>]/g;
@@ -12,17 +13,10 @@ const tagsToReplace: Record<string, string> = {
   '>': `\\u003E`, // eslint-disable-line @typescript-eslint/naming-convention
 };
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    export interface Response {
-      react: <Data>(initialData: Data) => Response;
-    }
-  }
-}
-
-export function reactMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
-  res.react = initialData => {
+export function reactMiddleware(req: expressCore.Request, ogRes: expressCore.Response, next: expressCore.NextFunction) {
+  const res = ogRes as expressCore.ResponseEx<any>;
+  
+  res.react = <Data, >(data: Data) => {
     res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
     res.header('Expires', '-1');
     res.header('Pragma', 'no-cache');
@@ -31,6 +25,11 @@ export function reactMiddleware(req: express.Request, res: express.Response, nex
     switch(req.accepts(['html', 'json'])) {
       case "html": {
         (async () => {
+          const initialData: InitialData & Data = {
+            ...data,
+            _csrf: req.csrfToken ? req.csrfToken() : undefined as any,
+          };
+          
           const initialDataJSON = JSON.stringify(initialData).replace(removeTags, tag => tagsToReplace[tag] || tag);
           
           res.send(index({
@@ -47,7 +46,7 @@ export function reactMiddleware(req: express.Request, res: express.Response, nex
       }
       
       case "json":
-        res.json(initialData);
+        res.json(data);
         break;
       
       default:

@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
 import { AppContainer } from "react-hot-loader";
 import App from "./client/App";
+import 'react-toastify/dist/ReactToastify.css';
 import 'semantic-ui-less/semantic.less';
 
 const initialData = JSON.parse(document?.getElementById('initialData')?.innerHTML || "{}"); // TODO: Inner text?

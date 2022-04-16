@@ -1,14 +1,16 @@
 import os from 'os';
 import PromiseRouter from "express-promise-router";
-import { IndexResponse } from "./apiTypes";
+import { IndexPageResponse } from "../../types/api";
 
 export const router = PromiseRouter();
 
-router.get('/', (req, res) => {
+// Pages go here
+
+router.get<never, IndexPageResponse>('/', (req, res) => {
   const initialData = {
     kek: `Welcome to Boilerplate 2.0 on ${os.hostname()}!`,
   };
   
-  res.react<IndexResponse>(initialData);
+  res.react(initialData);
 });
 

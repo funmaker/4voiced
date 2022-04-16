@@ -65,6 +65,9 @@ export default {
       }, {
         test: /\.css$|\.scss$|\.less$/,
         use: 'ignore-loader',
+      }, {
+        test: /\.sql$/i,
+        use: 'raw-loader',
       },
     ],
   },
