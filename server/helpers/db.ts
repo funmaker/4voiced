@@ -59,10 +59,8 @@ const db = {
       update = update.append(`"${field}"`).append(SQL` = ${fields[field]}`);
     }
     
-    update = update.append("\n");
-    
     if(update.query.length <= 0) return null;
-    else return update;
+    else return update.append("\n");
   },
   
   freeTextQuery: (query: string, fields: string[]) => {

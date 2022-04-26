@@ -13,6 +13,7 @@ export interface ErrorResponse {
 
 export interface InitialData {
   _csrf: string;
+  _config: Config;
 }
 
 export interface Config {

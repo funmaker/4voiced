@@ -21,6 +21,7 @@ export default function Layout({ children }: LayoutProps) {
     <div className={classJoin("Layout", compact && "compact")}
          ref={ref}
          style={{ fontSize: scale < 100 ? `${scale}%` : undefined }}>
+      <header />
       {children}
     </div>
   );

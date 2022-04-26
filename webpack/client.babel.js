@@ -67,7 +67,12 @@ export default {
         test: /\.scss$/,
         use: [
           MiniCssExtractPlugin.loader,
-          "css-loader",
+          {
+            loader: "css-loader",
+            options: {
+              url: false,
+            },
+          },
           "sass-loader",
         ],
       }, {
@@ -95,7 +100,12 @@ export default {
         test: /\.css$/,
         use: [
           MiniCssExtractPlugin.loader,
-          "css-loader",
+          {
+            loader: "css-loader",
+            options: {
+              url: false,
+            },
+          },
         ],
       },
     ],

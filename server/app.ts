@@ -9,7 +9,7 @@ import csrf from "csurf";
 import session from "express-session";
 import pgConnect from "connect-pg-simple";
 import { ErrorResponse } from "../types/api";
-import { reactMiddleware } from "./helpers/reactHelper";
+import reactMiddleware from "./helpers/reactHelper";
 import HTTPError from "./helpers/HTTPError";
 import configs from "./helpers/configs";
 import { pool } from "./helpers/db";
@@ -50,8 +50,7 @@ app.use((req, res, next) => {
   next(new HTTPError(404));
 });
 
-app.use((err: Partial<HTTPError>, req: expressCore.Request, ogRes: expressCore.Response, _next: expressCore.NextFunction) => {
-  const res = ogRes as expressCore.ResponseEx<ErrorResponse>;
+app.use((err: Partial<HTTPError>, req: expressCore.RequestEx<any, any, any>, res: expressCore.ResponseEx<ErrorResponse>, _next: expressCore.NextFunction) => {
   if(err.HTTPcode !== 404) console.error(err);
   
   const code = err.HTTPcode || 500;

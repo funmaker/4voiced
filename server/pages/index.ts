@@ -6,7 +6,7 @@ export const router = PromiseRouter();
 
 // Pages go here
 
-router.get<never, IndexPageResponse>('/', (req, res) => {
+router.get<never, IndexPageResponse>('/', async (req, res) => {
   const initialData = {
     kek: `Welcome to Boilerplate 2.0 on ${os.hostname()}!`,
   };

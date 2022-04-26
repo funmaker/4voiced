@@ -1,12 +1,12 @@
 import React from "react";
-import useRSS from "../hooks/useRSS";
+import useSSR from "../hooks/useSSR";
 
 interface Props {
   children?: any;
 }
 
 export default function SSRCurtain({ children }: Props) {
-  const rss = useRSS();
+  const rss = useSSR();
   
   if(rss) return null;
   else return children || null;

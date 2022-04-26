@@ -20,8 +20,7 @@ router.use((req, res, next) => {
   next(new HTTPError(404));
 });
 
-router.use((err: Partial<HTTPError>, req: expressCore.Request, ogRes: expressCore.Response, _next: expressCore.NextFunction) => {
-  const res = ogRes as expressCore.ResponseEx<ErrorResponse>;
+router.use((err: Partial<HTTPError>, req: expressCore.RequestEx<any, any, any>, res: expressCore.ResponseEx<ErrorResponse>, _next: expressCore.NextFunction) => {
   if(err.HTTPcode !== 404) console.error(err);
   
   const code = err.HTTPcode || 500;
