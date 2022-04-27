@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import path from "path";
 import webpack from 'webpack';
+import ReactRefreshWebpackPlugin from "@pmmmwh/react-refresh-webpack-plugin";
 
 const root = process.cwd();
 const siteFolder = path.resolve(root, "./client/semantic");
@@ -17,7 +18,7 @@ const BABEL_OPTIONS = {
     }],
   ],
   plugins: [
-    'react-hot-loader/babel',
+    require.resolve('react-refresh/babel'),
     "@babel/plugin-proposal-object-rest-spread",
     "@babel/plugin-proposal-class-properties",
   ],
@@ -38,7 +39,6 @@ export default {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.css', '.scss'],
     modules: [root, 'node_modules'],
     alias: {
-      "react-dom": '@hot-loader/react-dom',
       "../../theme.config$": path.resolve(siteFolder, "./theme.config.less"),
     },
   },
@@ -52,6 +52,7 @@ export default {
   },
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
+    new ReactRefreshWebpackPlugin(),
   ],
   module: {
     rules: [

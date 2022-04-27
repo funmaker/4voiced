@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
-import { Redirect, Route, Switch } from "react-router";
-import { hot } from 'react-hot-loader';
+import { Route, Routes } from "react-router";
 import { ToastContainer } from "react-toastify";
-import { usePageDataInit, PageDataContext } from "./hooks/usePageData";
+import { PageDataProvider } from "./hooks/usePageData";
+import { SSRProvider } from "./hooks/useSSR";
 import IndexPage from "./routes/index/IndexPage";
+import NotFoundPage from "./routes/notFound/NotFoundPage";
+import Layout from "./components/Layout";
 import "./globals.scss";
 
-interface Props {
+interface AppProps {
   initialData: any;
 }
 
@@ -17,9 +19,7 @@ declare global {
 }
 
 // eslint-disable-next-line prefer-arrow-callback
-export default hot(module)(function App({ initialData }: Props) {
-  const contextData = usePageDataInit(initialData);
-  
+export default function App({ initialData }: AppProps) {
   useEffect(() => {
     window._csrf = initialData._csrf;
   }, [initialData._csrf]);
@@ -29,12 +29,14 @@ export default hot(module)(function App({ initialData }: Props) {
   // }
   
   return (
-    <PageDataContext.Provider value={contextData}>
-      <Switch>
-        <Route path="/" exact component={IndexPage} />
-        <Redirect to="/" />
-      </Switch>
-      <ToastContainer position="bottom-right" newestOnTop />
-    </PageDataContext.Provider>
+    <SSRProvider>
+      <PageDataProvider initialData={initialData}>
+        <Routes>
+          <Route path="/" element={<Layout><IndexPage /></Layout>} />
+          <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
+        </Routes>
+        <ToastContainer position="bottom-right" newestOnTop />
+      </PageDataProvider>
+    </SSRProvider>
   );
-});
+}

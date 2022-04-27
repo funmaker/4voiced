@@ -11,8 +11,8 @@ type UnlistenCallback = () => void;
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const PageDataContext = React.createContext({
   pageData: null as any,
-  config: null as any as Config,
-  fetch: (): UnlistenCallback => { throw new Error("Not Initialized"); },
+  config: null as null | Config,
+  fetch: null as null | (() => UnlistenCallback),
 });
 
 interface FetchEmitter {
@@ -21,30 +21,39 @@ interface FetchEmitter {
   cancel: Canceler;
 }
 
-export function usePageDataInit(initialData: any = null): ContextType<typeof PageDataContext> {
+interface PageDataProviderProps {
+  initialData: any;
+  children: React.ReactNode;
+}
+
+export function PageDataProvider({ initialData, children }: PageDataProviderProps) {
   const initialError = !!initialData?._error;
   
   const [pageData, setPageData] = useState(initialError ? null : initialData);
   const fetchEmitter = useRef<FetchEmitter | null>(null);
   const location = useLocation();
   const locationRef = useRef(location);
+  const locationChanged = !locationCmp(locationRef.current, location);
   const error = useRef(initialError);
   const config = initialData._config;
   
-  useEffect(() => {
-    if(initialData?._error) {
-      toast.error(initialData?._error?.message || "Something Happened");
-      console.error(initialData._error);
-    }
-  }, [initialData._error]);
-  
-  useLocationChange((location) => {
+  if(locationChanged) {
     fetchEmitter.current?.cancel();
     fetchEmitter.current = null;
     locationRef.current = location;
     error.current = false;
-    setPageData(null);
-  });
+  }
+  
+  useEffect(() => {
+    if(locationChanged && pageData) setPageData(null);
+  }, [locationChanged, pageData]);
+  
+  useEffect(() => {
+    if(initialData?._error && initialData._error.code !== 404) {
+      toast.error(initialData?._error?.message || "Something Happened");
+      console.error(initialData._error);
+    }
+  }, [initialData._error]);
   
   const fetch = useCallback(() => {
     if(error.current) return () => {};
@@ -66,11 +75,11 @@ export function usePageDataInit(initialData: any = null): ContextType<typeof Pag
       fetchEmitter.current = null;
     });
     
-    fetchEmitter.current = {
+    const self = fetchEmitter.current = {
       listeners: 1,
       unlisten() {
-        this.listeners--;
-        if(this.listeners <= 0) this.cancel();
+        self.listeners--;
+        if(self.listeners <= 0) self.cancel();
       },
       cancel: cancelFetch,
     };
@@ -79,12 +88,22 @@ export function usePageDataInit(initialData: any = null): ContextType<typeof Pag
     return fetchEmitter.current.unlisten;
   }, []);
   
-  const data = locationCmp(locationRef.current, location) ? pageData : null;
-  return useMemo(() => ({ pageData: data, fetch, config }), [data, fetch, config]);
+  const value = useMemo(() => ({
+    pageData: locationChanged ? null : pageData,
+    fetch,
+    config,
+  }), [locationChanged, pageData, fetch, config]);
+  
+  return (
+    <PageDataContext.Provider value={value}>
+      {children}
+    </PageDataContext.Provider>
+  );
 }
 
-export default function usePageData<T>(autoFetch = true): [T | null, boolean, () => void] {
+export default function usePageData<T>(autoFetch = true): [T | null, boolean, () => UnlistenCallback] {
   const { pageData, fetch } = useContext(PageDataContext);
+  if(!fetch) throw new Error("useConfig must be used within PageData context");
   
   const loaded = pageData !== null;
   
@@ -98,5 +117,7 @@ export default function usePageData<T>(autoFetch = true): [T | null, boolean, ()
 
 export function useConfig(): Config {
   const { config } = useContext(PageDataContext);
+  if(!config) throw new Error("useConfig must be used within PageData context");
+  
   return config;
 }

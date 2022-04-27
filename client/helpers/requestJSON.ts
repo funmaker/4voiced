@@ -7,15 +7,9 @@ import { qsStringify } from './utils';
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const CancelToken = axios.CancelToken;
 
-interface RequestOptions<Req> {
-  method?: Method;
-  href?: string;
-  host?: string;
-  pathname?: string;
+interface RequestOptions<Req> extends Omit<AxiosRequestConfig<Req>, "cancelToken"> {
   search?: string | Req;
-  data?: Req;
   cancelCb?: (cancel: Canceler) => void;
-  axiosConfig?: AxiosRequestConfig;
   waitFix?: boolean; // TODO: Need proper fix for ns_binding_aborted
 }
 
@@ -23,29 +17,21 @@ interface RequestJsonError<T> extends AxiosError<T> {
   cancelNotify: () => void;
 }
 
-export default async function requestJSON<Res = void, Req = never>(options: RequestOptions<Req> = {}): Promise<Res> {
+export default async function requestJSON<Res = void, Req = never>({ url = "", search, cancelCb, waitFix, headers, ...rest }: RequestOptions<Req> = {}): Promise<Res> {
   if(isNode) return new Promise(() => {});
-  let { method, href, host, pathname, search, cancelCb, data, axiosConfig } = options;
   
-  host = host || location.host;
-  pathname = pathname || location.pathname;
-  if(search && typeof search !== "string") {
-    search = qsStringify(search);
-  }
-  search = search !== undefined ? search : location.search;
-  href = href || `//${host}${pathname}${search}`;
-  method = method || "GET";
+  if(search && typeof search !== "string") search = qsStringify(search);
+  if(search) url += search;
   
-  if(options.waitFix) await new Promise(res => setTimeout(res, 0));
+  if(waitFix) await new Promise(res => setTimeout(res, 0));
   
   try {
     const response = await axios({
-      ...axiosConfig,
-      method,
-      url: href,
-      data,
+      ...rest,
+      url,
       cancelToken: cancelCb ? new CancelToken(cancelCb) : undefined,
       headers: {
+        ...headers,
         'CSRF-Token': window._csrf, // eslint-disable-line @typescript-eslint/naming-convention
       },
     });

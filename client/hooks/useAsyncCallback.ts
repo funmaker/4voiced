@@ -3,7 +3,7 @@ import { DependencyList, useCallback, useState } from "react";
 export default function useAsyncCallback<T extends(...args: any[]) => Promise<any>>(callback: T, deps: DependencyList) {
   const [loading, setLoading] = useState(false);
   
-  const wrapped = useCallback(async (...args) => {
+  const wrapped = useCallback(async (...args: any[]) => {
     try {
       setLoading(true);
       
@@ -12,7 +12,7 @@ export default function useAsyncCallback<T extends(...args: any[]) => Promise<an
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deps]);
+  }, [deps]) as T;
   
-  return [wrapped as T, loading] as const;
+  return [wrapped, loading] as const;
 }

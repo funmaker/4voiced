@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, QueryResultRow } from 'pg';
 import SQL, { SQLStatement } from "sql-template-strings";
 import configs from './configs';
 import migrate from './migration';
@@ -10,20 +10,20 @@ export const migration = migrate(pool).catch(console.error);
 const db = {
   pool,
   
-  async queryFirst<T>(query: SQLStatement) {
+  async queryFirst<T extends QueryResultRow>(query: SQLStatement) {
     await migration;
     const { rows } = await pool.query<T>(query);
     if(rows.length <= 0) return null;
     return rows[0];
   },
   
-  async queryAll<T>(query: SQLStatement) {
+  async queryAll<T extends QueryResultRow>(query: SQLStatement) {
     await migration;
     const { rows } = await pool.query<T>(query);
     return rows;
   },
   
-  async query<T>(query: SQLStatement) {
+  async query<T extends QueryResultRow>(query: SQLStatement) {
     await migration;
     return await pool.query<T>(query);
   },
@@ -51,7 +51,7 @@ const db = {
     let first = true;
     
     for(const field of Object.keys(fields) as Array<keyof T>) {
-      if(fields[field] === undefined) continue;
+      if(typeof field !== "string" || fields[field] === undefined) continue;
       
       if(!first) update = update.append(",\n");
       else first = false;
