@@ -62,7 +62,7 @@ app.use((err: Partial<HTTPError>, req: expressCore.RequestEx<any, any, any>, res
     },
   };
   if("react" in res) res.status(code).react(result);
-  else res.status(code).json(result);
+  else (res as expressCore.Response).status(code).json(result);
 });
 
 export default app;

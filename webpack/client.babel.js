@@ -26,7 +26,6 @@ export default {
   target: 'web',
   context: root,
   entry: [
-    '@babel/polyfill',
     './client.tsx',
   ],
   resolve: {
@@ -92,6 +91,7 @@ export default {
                 globalVars: {
                   siteFolder,
                 },
+                math: 'always',
               },
             },
           },
