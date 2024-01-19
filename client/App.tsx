@@ -3,10 +3,11 @@ import { Route, Routes } from "react-router";
 import { ToastContainer } from "react-toastify";
 import { PageDataProvider } from "./hooks/usePageData";
 import { SSRProvider } from "./hooks/useSSR";
-import IndexPage from "./routes/index/IndexPage";
-import NotFoundPage from "./routes/notFound/NotFoundPage";
+import IndexPage from "./routes/IndexPage";
+import NotFoundPage from "./routes/NotFoundPage";
+import ErrorPage from "./routes/ErrorPage";
 import Layout from "./components/Layout";
-import "./globals.scss";
+import "./globals.css";
 
 interface AppProps {
   initialData: any;
@@ -18,7 +19,6 @@ declare global {
   }
 }
 
-// eslint-disable-next-line prefer-arrow-callback
 export default function App({ initialData }: AppProps) {
   useEffect(() => {
     window._csrf = initialData._csrf;

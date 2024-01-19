@@ -9,7 +9,7 @@ import csrf from "csurf";
 import session from "express-session";
 import pgConnect from "connect-pg-simple";
 import { ErrorResponse } from "../types/api";
-import reactMiddleware from "./helpers/reactHelper";
+import reactMiddleware from "./middlewares/reactMiddleware";
 import HTTPError from "./helpers/HTTPError";
 import configs from "./helpers/configs";
 import { pool } from "./helpers/db";
@@ -25,7 +25,7 @@ app.use(compression());
 app.use('/static', express.static('static'));
 if(process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
-  app.use(require('./helpers/webpackHelper').mount());
+  app.use(require('./middlewares/webpackMiddleware').mount());
 } else {
   app.use('/client.js', express.static('client.js'));
   app.use('/style.css', express.static('style.css'));
@@ -47,22 +47,24 @@ app.use('/api', apiRouter);
 app.use('/', pagesRouter);
 
 app.use((req, res, next) => {
-  next(new HTTPError(404));
+  next(new HTTPError(404, "Route not found"));
 });
 
 app.use((err: Partial<HTTPError>, req: expressCore.RequestEx<any, any, any>, res: expressCore.ResponseEx<ErrorResponse>, _next: expressCore.NextFunction) => {
-  if(err.HTTPcode !== 404) console.error(err);
+  if((err as any).code === 'EBADCSRFTOKEN') err = new HTTPError(401, "Bad CSRF token");
+  if(err.message !== "Route not found") console.error(err);
   
-  const code = err.HTTPcode || 500;
-  const result = {
-    _error: {
-      code,
-      message: err.publicMessage || http.STATUS_CODES[code] || "Something Happened",
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-    },
+  const knownError = err instanceof HTTPError;
+  const headers = knownError && err.headers || {};
+  const status = knownError && err.status || 500;
+  const error: ErrorResponse = {
+    status,
+    message: knownError && err.message || http.STATUS_CODES[status] || "Something Happened",
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   };
-  if("react" in res) res.status(code).react(result);
-  else (res as expressCore.Response).status(code).json(result);
+  
+  if("react" in (res as any)) res.set(headers).status(status).react({}, error);
+  else res.set(headers).status(status).json(error);
 });
 
 export default app;

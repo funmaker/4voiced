@@ -1,7 +1,7 @@
 import React from "react";
-import { classJoin } from "../helpers/utils";
+import { styled } from "@mui/material";
+import { transientOptions } from "../helpers/utils";
 import useMeasure from "../hooks/useMeasure";
-import "./Layout.scss";
 
 const MOBILE_WIDTH = 800;
 const MIN_WIDTH = 350;
@@ -11,18 +11,36 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export default function Layout({ children }: LayoutProps) {
   const { rect, ref } = useMeasure();
   const compact = rect ? rect.width < MOBILE_WIDTH : false;
   const scale = rect ? Math.min(rect.width / MIN_WIDTH, rect.height / MIN_HEIGHT, 1.0) * 100 : 100;
   
   return (
-    <div className={classJoin("Layout", compact && "compact")}
-         ref={ref}
-         style={{ fontSize: scale < 100 ? `${scale}%` : undefined }}>
+    <StyledLayout $compact={compact}
+                  ref={ref}
+                  style={{ fontSize: scale < 100 ? `${scale}%` : undefined }}>
       <header />
       {children}
-    </div>
+    </StyledLayout>
   );
 }
+
+const StyledLayout = styled("div", transientOptions)<{ $compact: boolean }>`
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  
+  ${props => props.$compact} {
+    // TODO: mobile
+  }
+  
+  > header {
+    position: sticky;
+    top: 0;
+  }
+  
+  > header + div {
+    flex: 1 0 auto;
+  }
+`;

@@ -11,7 +11,7 @@
 // }
 
 import * as core from "express-serve-static-core";
-import { User } from "./api";
+import { ErrorResponse, User } from "./api";
 
 declare module "express-serve-static-core" {
   export interface RequestEx<P, ResBody, ReqData> extends core.Request<P, ResBody, any, any, any> {
@@ -20,7 +20,8 @@ declare module "express-serve-static-core" {
   }
   
   export interface ResponseEx<ResBody> extends core.Response<ResBody, any, any> {
-    react: (initialData: ResBody) => void;
+    react(initialData: ResBody, error?: ErrorResponse): void;
+    react(initialData: Empty, error: ErrorResponse): void;
   }
   
   export interface RequestHandlerEx<
@@ -58,6 +59,6 @@ declare module "express-serve-static-core" {
 
 declare module 'express-session' {
   interface SessionData {
-  
+    
   }
 }

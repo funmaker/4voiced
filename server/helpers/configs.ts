@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import * as fs from 'fs';
 import { PoolConfig } from "pg";
 import defaultConfig from "../../configs.json";
@@ -26,7 +25,6 @@ function deepMerge<T extends Record<string, any>>(base: T, object: DeepPartial<T
   const ret: T = { ...base, ...object };
   
   for(const key in object) {
-    // eslint-disable-next-line no-prototype-builtins
     if(!object.hasOwnProperty(key)) continue;
     
     if(isPlainObject(base[key]) && isPlainObject(object[key])) ret[key] = deepMerge(base[key], object[key]);
@@ -38,7 +36,8 @@ function deepMerge<T extends Record<string, any>>(base: T, object: DeepPartial<T
 let configs: Configs = defaultConfig;
 
 try {
-  const configsFile = JSON.parse(fs.readFileSync("./configs.json", "utf-8"));
+  const configsPath = process.env.CONFIGS_PATH || "./configs.json";
+  const configsFile = JSON.parse(fs.readFileSync(configsPath, "utf-8"));
   
   configs = deepMerge(configs, configsFile);
 } catch(e) {

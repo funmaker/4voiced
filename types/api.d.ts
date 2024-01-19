@@ -4,20 +4,18 @@
 /////////////////////////
 
 export interface ErrorResponse {
-  _error: {
-    code: number;
-    message: string;
-    stack?: string;
-  };
+  status: number;
+  message: string;
+  stack?: string;
 }
 
 export interface InitialData {
-  _csrf: string;
   _config: Config;
+  _error?: ErrorResponse;
 }
 
 export interface Config {
-
+  csrf: string;
 }
 
 

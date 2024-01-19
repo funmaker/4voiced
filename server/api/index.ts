@@ -17,19 +17,19 @@ router.use((req, res, next) => {
 
 
 router.use((req, res, next) => {
-  next(new HTTPError(404));
+  next(new HTTPError(404, "Route not found"));
 });
 
 router.use((err: Partial<HTTPError>, req: expressCore.RequestEx<any, any, any>, res: expressCore.ResponseEx<ErrorResponse>, _next: expressCore.NextFunction) => {
-  if(err.HTTPcode !== 404) console.error(err);
+  if(err.message !== "Route not found") console.error(err);
   
-  const code = err.HTTPcode || 500;
-  const result = {
-    _error: {
-      code,
-      message: err.publicMessage || http.STATUS_CODES[code] || "Something Happened",
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-    },
+  const knownError = err instanceof HTTPError;
+  const headers = knownError && err.headers || {};
+  const status = knownError && err.status || 500;
+  const result: ErrorResponse = {
+    status,
+    message: knownError && err.message || http.STATUS_CODES[status] || "Something Happened",
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   };
-  res.status(code).json(result);
+  res.set(headers).status(status).json(result);
 });

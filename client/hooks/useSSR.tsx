@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const SSRContext = React.createContext(true);
 
 interface SSRProviderProps {
@@ -22,9 +21,5 @@ export function SSRProvider({ children }: SSRProviderProps) {
 }
 
 export default function useSSR() {
-  const [ssr, setSSR] = useState(true);
-  
-  useEffect(() => setSSR(false), []);
-  
-  return ssr;
+  return useContext(SSRContext);
 }

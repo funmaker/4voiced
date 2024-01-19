@@ -100,7 +100,7 @@
       },
       {
         "selector": "variable",
-        "format": ["camelCase", "UPPER_CASE"],
+        "format": ["camelCase", "UPPER_CASE", "PascalCase"],
         "leadingUnderscore": "allow",
         "trailingUnderscore": "allow"
       },
@@ -109,12 +109,30 @@
         "format": ["PascalCase"]
       },
       {
-        "selector": ["function"],
+        "selector": "function",
         "format": ["camelCase", "PascalCase"]
       },
       {
-        "selector": ["enumMember"],
+        "selector": "enumMember",
         "format": ["UPPER_CASE"]
+      },
+      {
+        "selector": "import",
+        "format": null
+      },
+      {
+        "selector": [
+          "classProperty",
+          "objectLiteralProperty",
+          "typeProperty",
+          "classMethod",
+          "objectLiteralMethod",
+          "typeMethod",
+          "accessor",
+          "enumMember"
+        ],
+        "format": null,
+        "modifiers": ["requiresQuotes"]
       }
     ],
     "@typescript-eslint/no-array-constructor": "warn",
@@ -231,6 +249,7 @@
       }
     ],
     "no-negated-in-lhs": "warn",
+    "no-prototype-builtins": "off",
     "no-octal": "warn",
     "no-redeclare": "off",
     "no-regex-spaces": "off",

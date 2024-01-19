@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { styled } from "@mui/material";
 import { ILoremIpsumParams, loremIpsum } from "lorem-ipsum";
 import SSRCurtain from "./SSRCurtain";
 import "./LoremIpsum.scss";
@@ -10,9 +11,13 @@ export default function LoremIpsum(props: LoremIpsumProps) {
   const text = useMemo(() => loremIpsum(props), [...Object.values(props)]);
   
   return (
-    <span className="LoremIpsum">
+    <span>
       <SSRCurtain>{text}</SSRCurtain>
     </span>
   );
 }
+
+const StyledLoremIpsum = styled("span")`
+    white-space: pre-line;
+`;
 

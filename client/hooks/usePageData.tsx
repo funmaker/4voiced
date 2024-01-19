@@ -1,19 +1,37 @@
-import React, { ContextType, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Canceler } from "axios";
-import { useLocation } from "react-router";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import axios, { Canceler } from "axios";
+import { useLocation, useNavigate } from "react-router";
 import { toast } from "react-toastify";
-import { Config } from "../../types/api";
+import { Config, InitialData } from "../../types/api";
+import { ClientError } from "../helpers/clientError";
+import { qsStringify } from "../helpers/utils";
 import requestJSON from "../helpers/requestJSON";
-import useLocationChange, { locationCmp } from "./useLocationChange";
+import { locationCmp } from "./useLocationChange";
+import useRefCache from "./useRefCache";
 
 type UnlistenCallback = () => void;
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const PageDataContext = React.createContext({
-  pageData: null as any,
-  config: null as null | Config,
-  fetch: null as null | (() => UnlistenCallback),
+interface PageDataContextState {
+  pageData: any;
+  pageError: ClientError | null;
+  fetching: boolean;
+  fetch: (() => UnlistenCallback) | null;
+  config: Config | null;
+}
+
+export const PageDataContext = React.createContext<PageDataContextState>({
+  pageData: null,
+  pageError: null,
+  fetching: false,
+  fetch: null,
+  config: null,
 });
+
+declare global {
+  interface Window {
+    _csrf: string;
+  }
+}
 
 interface FetchEmitter {
   listeners: number;
@@ -22,19 +40,21 @@ interface FetchEmitter {
 }
 
 interface PageDataProviderProps {
-  initialData: any;
+  initialData: InitialData;
   children: React.ReactNode;
 }
 
 export function PageDataProvider({ initialData, children }: PageDataProviderProps) {
-  const initialError = !!initialData?._error;
-  
-  const [pageData, setPageData] = useState(initialError ? null : initialData);
+  const [pageData, setPageData] = useState<any>(initialData?._error ? null : initialData);
+  const [pageError, setPageError] = useState<ClientError | null>(initialData?._error ? new ClientError(initialData._error) : null);
+  const [fetching, setFetching] = useState(false);
   const fetchEmitter = useRef<FetchEmitter | null>(null);
+  const navigate = useNavigate();
+  const navigateRef = useRefCache(navigate); // TODO: remix-run/react-router/issues/7634
   const location = useLocation();
   const locationRef = useRef(location);
   const locationChanged = !locationCmp(locationRef.current, location);
-  const error = useRef(initialError);
+  const error = useRef(!!pageError);
   const config = initialData._config;
   
   if(locationChanged) {
@@ -45,15 +65,30 @@ export function PageDataProvider({ initialData, children }: PageDataProviderProp
   }
   
   useEffect(() => {
-    if(locationChanged && pageData) setPageData(null);
-  }, [locationChanged, pageData]);
+    window._csrf = config.csrf;
+  }, [config.csrf]);
   
   useEffect(() => {
-    if(initialData?._error && initialData._error.code !== 404) {
-      toast.error(initialData?._error?.message || "Something Happened");
-      console.error(initialData._error);
+    if(locationChanged) {
+      if(pageData) setPageData(null);
+      if(pageError) setPageError(null);
     }
-  }, [initialData._error]);
+  }, [locationChanged, pageData, pageError]);
+  
+  useEffect(() => {
+    const initialError = initialData?._error;
+    if(initialError) {
+      if(initialError.status === 401) {
+        toast.warning(initialError.message);
+        navigateRef.current(`/auth/login${qsStringify({ redirect: locationRef.current.pathname + locationRef.current.search + locationRef.current.hash })}`);
+      } else if(initialError.status === 403 || (initialError.status === 404 && initialError.message === "Route not found")) {
+        toast.warning(initialError.message);
+        navigateRef.current(`/`);
+      } else if(initialError.status !== 404) {
+        toast.error(initialError?.message || "Something Happened");
+      }
+    }
+  }, [navigateRef, initialData]);
   
   const fetch = useCallback(() => {
     if(error.current) return () => {};
@@ -63,16 +98,22 @@ export function PageDataProvider({ initialData, children }: PageDataProviderProp
       return fetchEmitter.current.unlisten;
     }
     
+    setFetching(true);
+    
     let cancelFetch = () => {};
     requestJSON({
       waitFix: true,
       cancelCb: cancel => cancelFetch = cancel,
     }).then(data => {
       setPageData(data);
-    }).catch(error => {
-      error.current = true;
+    }).catch(err => {
+      if(!axios.isCancel(err)) {
+        error.current = true;
+        setPageError(new ClientError(err));
+      }
     }).finally(() => {
       fetchEmitter.current = null;
+      setFetching(false);
     });
     
     const self = fetchEmitter.current = {
@@ -90,9 +131,11 @@ export function PageDataProvider({ initialData, children }: PageDataProviderProp
   
   const value = useMemo(() => ({
     pageData: locationChanged ? null : pageData,
+    pageError: locationChanged ? null : pageError,
+    fetching,
     fetch,
     config,
-  }), [locationChanged, pageData, fetch, config]);
+  }), [locationChanged, pageData, pageError, fetching, fetch, config]);
   
   return (
     <PageDataContext.Provider value={value}>
@@ -101,8 +144,8 @@ export function PageDataProvider({ initialData, children }: PageDataProviderProp
   );
 }
 
-export default function usePageData<T>(autoFetch = true): [T | null, boolean, () => UnlistenCallback] {
-  const { pageData, fetch } = useContext(PageDataContext);
+export default function usePageData<T>(autoFetch = true) {
+  const { pageData, fetching, fetch, pageError } = useContext(PageDataContext);
   if(!fetch) throw new Error("useConfig must be used within PageData context");
   
   const loaded = pageData !== null;
@@ -112,7 +155,12 @@ export default function usePageData<T>(autoFetch = true): [T | null, boolean, ()
     else return fetch();
   }, [fetch, loaded, autoFetch]);
   
-  return [pageData, !loaded, fetch];
+  return {
+    pageData: pageData as T | null,
+    fetching: fetching || (autoFetch && !pageData && !pageError),
+    refresh: fetch,
+    pageError,
+  };
 }
 
 export function useConfig(): Config {

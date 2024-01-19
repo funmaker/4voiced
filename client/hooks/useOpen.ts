@@ -1,11 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export default function useOpen() {
-  const [open, setOpen] = useState(false);
+interface UseOpenProps {
+  defaultOpen?: boolean;
+  open?: boolean;
+  onOpen?: () => void;
+  onClose?: () => void;
+}
+
+export default function useOpen({ defaultOpen, open: inOpen, onOpen: inOnOpen, onClose: inOnClose }: UseOpenProps = {}) {
+  const [open, setOpen] = useState(defaultOpen || false);
   const mounted = useRef(false);
   
-  const onOpen = useCallback(() => mounted.current && setOpen(true), []);
-  const onClose = useCallback(() => mounted.current && setOpen(false), []);
+  const onOpen = useCallback(() => {
+    if(!mounted.current) return;
+    
+    setOpen(true);
+    if(inOnOpen) inOnOpen();
+  }, [inOnOpen]);
+  
+  const onClose = useCallback(() => {
+    if(!mounted.current) return;
+    
+    setOpen(false);
+    if(inOnClose) inOnClose();
+  }, [inOnClose]);
   
   useEffect(() => {
     mounted.current = true;
@@ -14,5 +32,9 @@ export default function useOpen() {
     };
   }, []);
   
-  return { open, onOpen, onClose };
+  return {
+    open: inOpen ?? open,
+    onOpen,
+    onClose,
+  };
 }

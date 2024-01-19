@@ -1,13 +1,18 @@
-import { Dispatch, useCallback, useEffect, useReducer, useRef } from "react";
+import React, { Dispatch, useCallback, useEffect, useReducer, useRef } from "react";
 import axios, { Canceler } from "axios";
+import { useDebouncedCallback } from "use-debounce";
 import requestJSON from "../helpers/requestJSON";
 import useChange, { arrayCmp } from "./useChange";
+import useRefCache from "./useRefCache";
 
 export interface EndlessPageOptions<Res, Req, I> {
   pathname: string;
   search?: Omit<Req, 'page'>;
   initialPage?: I[];
   responseMap: (response: Res) => I[];
+  context?: React.RefObject<HTMLElement | null>;
+  fetchOverride?: boolean;
+  resetDebounce?: number;
 }
 
 interface EndlessPageState<I> {
@@ -64,8 +69,8 @@ export interface Pageable {
 export default function useEndlessPage<Res, Req extends Pageable, I>(options: EndlessPageOptions<Res, Req, I>, deps: any[]) {
   const cancelRef = useRef<Canceler | null>(null);
   const fetchingRef = useRef(false);
-  const optionsRef = useRef(options);
-  optionsRef.current = options;
+  const optionsRef = useRefCache(options);
+  const context = options.context;
   
   const [state, dispatch] = useReducer(endlessPageReducer, {
     items: options.initialPage || [],
@@ -107,35 +112,58 @@ export default function useEndlessPage<Res, Req extends Pageable, I>(options: En
       cancelRef.current = null;
       fetchingRef.current = false;
     }
-  }, []);
+  }, [optionsRef]);
   
-  const checkScroll = useCallback(() => {
-    const body = document.body;
-    const html = document.documentElement;
-    const bottomPosition = window.pageYOffset + window.innerHeight;
-    const bodyHeight = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight);
-    
-    if(bodyHeight - bottomPosition < window.innerHeight * 0.5) requestNext();
-  }, [requestNext]);
-  
-  const reset = useCallback(() => {
+  const reset = useDebouncedCallback(() => {
     if(cancelRef.current) cancelRef.current();
     dispatch({ kind: "reset" });
-  }, []);
+  }, options.resetDebounce || 0);
   
-  useEffect(() => checkScroll(), [checkScroll, state.items]);
+  const checkScroll = useCallback((ev?: Event) => {
+    if(ev && ev.type === "scroll") {
+      if(ev.target !== document && ev.target !== optionsRef.current.context?.current) return;
+    }
+    
+    if(reset.isPending()) return;
+    
+    if(optionsRef.current.fetchOverride !== undefined) {
+      if(optionsRef.current.fetchOverride) requestNext();
+      
+      return;
+    }
+    
+    let bottomPosition: number;
+    let scrollHeight: number;
+    let innerHeight: number;
+    
+    if(context?.current) {
+      bottomPosition = context.current.scrollTop + context.current.offsetHeight;
+      scrollHeight = context.current.scrollHeight;
+      innerHeight = context.current.clientHeight;
+    } else {
+      const body = document.body;
+      const html = document.documentElement;
+      bottomPosition = window.scrollY + window.innerHeight;
+      scrollHeight = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight);
+      innerHeight = window.innerHeight;
+    }
+    
+    if(scrollHeight - bottomPosition <= innerHeight * 0.5) requestNext();
+  }, [context, optionsRef, requestNext, reset]);
+  
+  useChange(deps, reset, arrayCmp);
+  
+  useEffect(() => checkScroll(), [checkScroll, state.items, options.fetchOverride]); // remember to trigger checkScroll also whenever new page is fetched(state.items changed) or fetchOverride changed
   
   useEffect(() => {
-    checkScroll();
-    document.addEventListener("scroll", checkScroll);
+    document.addEventListener("scroll", checkScroll, true);
     window.addEventListener("resize", checkScroll);
+    
     return () => {
-      document.removeEventListener("scroll", checkScroll);
+      document.removeEventListener("scroll", checkScroll, true);
       window.removeEventListener("resize", checkScroll);
     };
   }, [checkScroll]);
-  
-  useChange(deps, reset, arrayCmp);
   
   return { ...state, requestNext, reset };
 }

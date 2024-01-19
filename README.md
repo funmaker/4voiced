@@ -3,7 +3,7 @@
 Basic boilerplate for isomorphic React web apps. Including:
 - Node.js
 - Typescript
-- Semantic UI (+theming)
+- Material UI
 - React
 - Webpack
 - Sass
