@@ -12,16 +12,7 @@ export const babelOptions = {
     "@babel/preset-react",
   ],
   plugins: [
-    ['@emotion', {
-      importMap: {
-        '@mui/material': {
-          styled: {
-            canonicalImport: ['@emotion/styled', 'default'],
-            styledBaseImport: ['@mui/material', 'styled'],
-          },
-        },
-      },
-    }],
+    ['@emotion'],
   ],
 };
 
@@ -34,8 +25,10 @@ export default {
     modules: [root, 'node_modules'],
   },
   output: {
-    path: path.join(root, 'dist'),
+    path: path.join(root, 'dist', 'static'),
+    publicPath: "/static/",
     filename: 'client.js',
+    chunkFilename: '[contenthash].server.js',
   },
   module: {
     rules: [

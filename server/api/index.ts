@@ -3,6 +3,8 @@ import PromiseRouter from "express-promise-router";
 import expressCore from "express-serve-static-core";
 import HTTPError from "../helpers/HTTPError";
 import { ErrorResponse } from "../../types/api";
+import * as boards from "./boards";
+import * as proxy from "./proxy";
 
 export const router = PromiseRouter();
 
@@ -13,7 +15,8 @@ router.use((req, res, next) => {
 });
 
 
-// API Routes go here
+router.use("/boards", boards.router);
+router.use("/proxy", proxy.router);
 
 
 router.use((req, res, next) => {

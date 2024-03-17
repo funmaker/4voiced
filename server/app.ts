@@ -5,14 +5,10 @@ import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import compression from "compression";
 import morgan from "morgan";
-import csrf from "csurf";
-import session from "express-session";
-import pgConnect from "connect-pg-simple";
 import { ErrorResponse } from "../types/api";
 import reactMiddleware from "./middlewares/reactMiddleware";
+import wsMiddleware from "./middlewares/wsMiddleware";
 import HTTPError from "./helpers/HTTPError";
-import configs from "./helpers/configs";
-import { pool } from "./helpers/db";
 import { router as apiRouter } from "./api";
 import { router as pagesRouter } from "./pages";
 
@@ -26,21 +22,9 @@ app.use('/static', express.static('static'));
 if(process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
   app.use(require('./middlewares/webpackMiddleware').mount());
-} else {
-  app.use('/client.js', express.static('client.js'));
-  app.use('/style.css', express.static('style.css'));
 }
 
-const pgSession = pgConnect(session);
-app.use(session({
-  store: new pgSession({ pool }),
-  secret: configs.session.secret,
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
-}));
-
-app.use(csrf());
+app.use(wsMiddleware);
 app.use(reactMiddleware);
 
 app.use('/api', apiRouter);

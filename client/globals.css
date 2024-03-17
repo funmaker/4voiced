@@ -8,3 +8,15 @@
 html, body, #root {
   height: 100%;
 }
+
+:root {
+  font-family: arial, helvetica, sans-serif;
+}
+
+@property --board-background-1 { syntax: "<color>"; inherits: true; initial-value: #eef2ff; }
+@property --board-background-2 { syntax: "<color>"; inherits: true; initial-value: #d1d5ee; }
+@property --board-background-3 { syntax: "<color>"; inherits: true; initial-value: #bbc1e8; }
+@property --post-background    { syntax: "<color>"; inherits: true; initial-value: #d6daf0; }
+@property --post-border        { syntax: "<color>"; inherits: true; initial-value: #b7c5d9; }
+@property --quote-link         { syntax: "<color>"; inherits: true; initial-value: #d00; }
+

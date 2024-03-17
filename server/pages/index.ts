@@ -1,6 +1,6 @@
-import os from 'os';
 import PromiseRouter from "express-promise-router";
 import { IndexPageResponse } from "../../types/api";
+import * as boardsController from "../controllers/boards";
 
 export const router = PromiseRouter();
 
@@ -10,13 +10,9 @@ router.use((req, res, next) => {
   next();
 });
 
-// Pages go here
-
-router.get<never, IndexPageResponse>('/', async (req, res) => {
-  const initialData = {
-    kek: `Welcome to Boilerplate 3.0 on ${os.hostname()}!`,
-  };
+router.get<never, IndexPageResponse, never>(['/', "/board/:board"], async (req, res) => {
+  const boards = [...boardsController.boards.values()].map(board => board.info);
   
-  res.react(initialData);
+  res.react({ boards });
 });
 

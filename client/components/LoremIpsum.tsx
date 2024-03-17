@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { styled } from "@mui/material";
+import styled from "@emotion/styled";
 import { ILoremIpsumParams, loremIpsum } from "lorem-ipsum";
 import SSRCurtain from "./SSRCurtain";
 import "./LoremIpsum.scss";

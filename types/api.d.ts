@@ -1,3 +1,6 @@
+import { Board } from "./4chan";
+import { string } from "prop-types";
+import { listenerCounts } from "../server/controllers/dispatch";
 
 /////////////////////////
 //       Commons       //
@@ -16,6 +19,7 @@ export interface InitialData {
 
 export interface Config {
   csrf: string;
+  boards: Board[];
 }
 
 
@@ -24,10 +28,35 @@ export interface Config {
 /////////////////////////
 
 export interface IndexPageResponse {
-  kek: string;
+
 }
 
 
 /////////////////////////
 //         API         //
 /////////////////////////
+
+export interface ListBoardsResult {
+  boards: Board[];
+}
+
+export type GetBoardResult = Board;
+
+export interface GetBoardParams {
+  board?: string;
+  thread?: string;
+}
+
+export interface BoardStats {
+  board: string;
+  fetching: boolean;
+  listeners: number;
+  nextFetch: number | null;
+  lastPostNo: number | null;
+}
+
+export interface BoardsStats {
+  statusListeners: number;
+  allListeners: number;
+  boards: BoardStats[];
+}

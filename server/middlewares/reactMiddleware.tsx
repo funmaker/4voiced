@@ -4,6 +4,7 @@ import { StaticRouter } from "react-router-dom/server";
 import expressCore from "express-serve-static-core";
 import App from "../../client/App";
 import { ErrorResponse, InitialData } from "../../types/api";
+import * as boardsController from "../controllers/boards";
 import index from '../views/index.handlebars';
 import HTTPError from "../helpers/HTTPError";
 
@@ -28,6 +29,7 @@ export default function reactMiddleware(req: expressCore.RequestEx<any, any, any
             _error: error,
             _config: {
               csrf: req.csrfToken ? req.csrfToken() : undefined as any,
+              boards: [...boardsController.boards.values()].map(board => board.info),
             },
           };
           

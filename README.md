@@ -1,15 +1,6 @@
-# Webapp Boilerplate
+# 4chan voiced
 
-Basic boilerplate for isomorphic React web apps. Including:
-- Node.js
-- Typescript
-- Material UI
-- React
-- Webpack
-- Sass
-- Babel
-- Handlebars
-- Universal Hot Reload
+4chan.org spacially voiced using [mespeak.js](https://www.masswerk.at/mespeak/) and Web Audio API.
 
 ## Usage
 

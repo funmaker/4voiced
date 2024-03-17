@@ -1,5 +1,9 @@
 import qs, { ParsedQs } from "qs";
-import { FilteringStyledOptions } from "@mui/styled-engine";
+import { FilteringStyledOptions } from "@emotion/styled";
+
+export type SetState<T> = React.Dispatch<React.SetStateAction<T>>;
+
+export type ImmutableRef<T> = Readonly<React.MutableRefObject<T>>;
 
 export function classJoin(...classes: Array<string | null | undefined | false>) {
   return classes.filter(x => x).join(" ") || undefined;

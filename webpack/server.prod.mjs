@@ -5,4 +5,5 @@ import commons from "./server.commons.mjs";
 export default merge(commons, {
   mode: 'production',
   devtool: 'source-map',
+  entry: './server.ts',
 });

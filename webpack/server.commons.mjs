@@ -13,16 +13,7 @@ export const babelOptions = {
     "@babel/preset-react",
   ],
   plugins: [
-    ['@emotion', {
-      importMap: {
-        '@mui/material': {
-          styled: {
-            canonicalImport: ['@emotion/styled', 'default'],
-            styledBaseImport: ['@mui/material', 'styled'],
-          },
-        },
-      },
-    }],
+    ['@emotion'],
   ],
 };
 
@@ -31,7 +22,6 @@ export default {
   target: 'async-node',
   context: root,
   externals: [nodeExternals()],
-  entry: './server.ts',
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx'],
     modules: [root, 'node_modules'],
@@ -39,6 +29,7 @@ export default {
   output: {
     path: path.join(root, 'dist'),
     filename: 'server.js',
+    chunkFilename: '[contenthash].server.js',
     devtoolModuleFilenameTemplate: "[absolute-resource-path]",
   },
   node: {
