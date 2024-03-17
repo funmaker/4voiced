@@ -35,7 +35,7 @@ export default function App({ initialData }: AppProps) {
         <SFWProvider>
           <SpeechProvider>
             <Routes>
-              <Route path="/board/:board" element={<Layout><IndexPage /></Layout>} />
+              <Route path="/board/:board/:thread?" element={<Layout><IndexPage /></Layout>} />
               <Route path="/" element={<Layout><IndexPage /></Layout>} />
               <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
             </Routes>

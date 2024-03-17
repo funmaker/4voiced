@@ -10,7 +10,7 @@ router.use((req, res, next) => {
   next();
 });
 
-router.get<never, IndexPageResponse, never>(['/', "/board/:board"], async (req, res) => {
+router.get<never, IndexPageResponse, never>(['/', "/board/:board/:thread?"], async (req, res) => {
   const boards = [...boardsController.boards.values()].map(board => board.info);
   
   res.react({ boards });

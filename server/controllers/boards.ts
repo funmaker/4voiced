@@ -40,12 +40,20 @@ export async function startFetching() {
     while(!terminated) {
       let nextFetchEstimation: number | null = null;
       let nextBoard: BoardInstance | null = null;
+      let nextPending = false;
+      let nextLowPriority = false;
       for(const board of boards.values()) {
-        const estimation = board.nextFetchEstimation();
+        const [estimation, lowPriority] = board.nextFetchEstimation();
+        const pending = estimation !== null && estimation < Date.now();
         
-        if(estimation !== null && (nextFetchEstimation === null || nextFetchEstimation > estimation)) {
+        if(estimation === null) continue;
+        if(pending && nextPending && lowPriority && !nextLowPriority) continue;
+        
+        if((nextFetchEstimation === null || nextFetchEstimation > estimation || (pending && nextPending && !lowPriority && nextLowPriority))) {
           nextFetchEstimation = estimation;
           nextBoard = board;
+          nextPending = pending;
+          nextLowPriority = lowPriority;
         }
       }
       
@@ -62,7 +70,7 @@ export async function startFetching() {
         return;
       }
       
-      console.log(`Fetching board /${nextBoard.info.board}/...`);
+      console.log(`Fetching board /${nextBoard.info.board}/... (${nextLowPriority ? "low prio" : "high prio"})`);
       try {
         nextBoard.fetching = true;
         dispatchController.broadcastStatus();
@@ -158,10 +166,14 @@ class BoardInstance {
     }
   }
   
-  nextFetchEstimation(): number | null {
-    if(dispatchController.listenerCount(this.name) === 0) return null;
-    else if(this.nextFetchHint === null) return 0;
-    else return this.nextFetchHint;
+  nextFetchEstimation(): [number | null, boolean] {
+    const allListener = dispatchController.listenerCount() !== 0;
+    const thisListener = dispatchController.listenerCount(this.name) !== 0;
+    const lowPriority = allListener && !thisListener;
+    
+    if(!allListener && !thisListener) return [null, false];
+    else if(this.nextFetchHint === null) return [0, lowPriority];
+    else return [this.nextFetchHint, lowPriority];
   }
 }
 

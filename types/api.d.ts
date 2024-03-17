@@ -53,6 +53,7 @@ export interface BoardStats {
   listeners: number;
   nextFetch: number | null;
   lastPostNo: number | null;
+  lowPriority: boolean;
 }
 
 export interface BoardsStats {

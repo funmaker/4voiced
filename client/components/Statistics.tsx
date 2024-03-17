@@ -14,10 +14,11 @@ export default function Statistics({ className }: FetchingStatsProps) {
   const [stats, setStats] = useState<BoardsStats | null>(null);
   const sorted = useMemo(() => (
     [...stats?.boards || []].sort((a, b) =>
-      (+!!b.nextFetch - +!!a.nextFetch)
-      || (a.nextFetch && b.nextFetch && a.nextFetch - b.nextFetch)
+      (+(b.nextFetch !== null) - +(a.nextFetch !== null))
+      || (a.nextFetch !== null && b.nextFetch !== null && a.nextFetch < now && b.nextFetch < now && +a.lowPriority - +b.lowPriority)
+      || (a.nextFetch !== null && b.nextFetch !== null && a.nextFetch - b.nextFetch)
       || a.board.localeCompare(b.board))
-  ), [stats]);
+  ), [now, stats?.boards]);
   
   const { status } = useWebSocket<BoardsStats>({
     url: "/api/boards/status",
@@ -31,12 +32,17 @@ export default function Statistics({ className }: FetchingStatsProps) {
     return () => void clearInterval(interval);
   }, []);
   
+  let totalStats;
+  if(stats) totalStats = stats.statusListeners + stats.allListeners + stats.boards.reduce((acc, val) => acc + val.listeners, 0);
+  else totalStats = null;
+  
   return (
     <StyledStatistics className={className}>
       <BoardRow> WebSocket: <StatsValue>{status}</StatsValue></BoardRow>
       <BoardRow></BoardRow>
       <BoardRow> /all/ listeners: <StatsValue>{stats?.allListeners ?? "N/A"}</StatsValue></BoardRow>
       <BoardRow> Stats listeners: <StatsValue>{stats?.statusListeners ?? "N/A"}</StatsValue></BoardRow>
+      <BoardRow> Total listeners: <StatsValue>{totalStats ?? "N/A"}</StatsValue></BoardRow>
       <BoardRow></BoardRow>
       <BoardRow>  board  |   last post   | lis |  status  </BoardRow>
       <BoardRow> ------- + ------------- + --- + -------- </BoardRow>
@@ -60,23 +66,26 @@ function Board({ board, now }: BoardProps) {
   let time;
   if(board.fetching) time = "fetching";
   else if(nextFetchIn === null) time = "---";
+  else if(nextFetchIn <= 0 && board.lowPriority) time = "waiting";
   else if(nextFetchIn <= 0) time = "in queue";
   else time = `${Math.ceil(nextFetchIn / 1000)}s`;
   
   return (
-    <BoardRow key={board.board} $disabled={!board.nextFetch} $fetching={board.fetching} $queue={!!board.nextFetch && board.nextFetch < now}>
+    <BoardRow key={board.board} $disabled={!board.nextFetch} $fetching={board.fetching} $queue={board.nextFetch !== null && board.nextFetch < now} $lowPriority={board.lowPriority}>
       {name.padStart(8, " ")} | {lastPost.padEnd(13, " ")} | {listeners.padEnd(3, " ")} | {time.padEnd(9, " ")}
     </BoardRow>
   );
 }
 
-const BoardRow = styled("div", transientOptions)<{ $disabled?: boolean; $fetching?: boolean; $queue?: boolean}>`
+const BoardRow = styled("div", transientOptions)<{ $disabled?: boolean; $fetching?: boolean; $queue?: boolean; $lowPriority?: boolean }>`
   height: 1em;
   line-height: 1em;
+  color: black;
   
   ${props => props.$disabled && css`color: gray`}
-  ${props => props.$queue && css`color: orange`}
-  ${props => props.$fetching && css`color: green`}
+  ${props => props.$queue && css`color: darkcyan`}
+  ${props => props.$queue && props.$lowPriority && css`color: darkgreen`}
+  ${props => props.$fetching && css`color: blue`}
 `;
 
 const StyledStatistics = styled("div")`

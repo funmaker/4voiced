@@ -59,9 +59,8 @@ export async function addListener(ws: WebSocket, board: string | null = null, th
 }
 
 export function listenerCount(board?: string) {
-  let count = listenerCounts.all || 0;
-  if(board) count += listenerCounts[board] || 0;
-  return count;
+  if(board) return listenerCounts[board] || 0;
+  return listenerCounts.all || 0;
 }
 
 export function dispatchPost(post: IndexPost, board: string, delay: number) {
@@ -110,13 +109,18 @@ function getStatus(): BoardsStats {
   return {
     statusListeners: listenerCounts.status || 0,
     allListeners: listenerCounts.all || 0,
-    boards: [...boardsController.boards.values()].map(board => ({
-      board: board.name,
-      fetching: board.fetching,
-      listeners: listenerCounts[board.name] || 0,
-      lastPostNo: board.lastPostNo,
-      nextFetch: board.nextFetchEstimation(),
-    })),
+    boards: [...boardsController.boards.values()].map(board => {
+      const [nextFetch, lowPriority] = board.nextFetchEstimation();
+      
+      return {
+        board: board.name,
+        fetching: board.fetching,
+        listeners: listenerCounts[board.name] || 0,
+        lastPostNo: board.lastPostNo,
+        nextFetch,
+        lowPriority,
+      };
+    }),
   };
 }
 
