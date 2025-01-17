@@ -17,7 +17,7 @@ FROM node:20-alpine AS runtime
 WORKDIR /app
 #RUN apk add --update --no-cache \
 #    # Canvas runtime dependencies
-#    python3 cairo pango \
+#    python3 cairo pango; \
 #    rm -rf /var/cache/apk/*
 ENV PORT=80
 EXPOSE 80
